@@ -1,0 +1,12 @@
+# Shared environment for Day 1, Day 2, and Day 3 learning exercises.
+# Mini-projects keep their own requirements.txt and may use their own .venv.
+langchain==0.3.30
+langchain-core==0.3.86
+langchain-groq==0.3.8
+langchain-openai==0.3.35
+groq==0.37.1
+openai==2.48.0
+python-dotenv==1.2.1
+redis==7.0.1
+fastapi==0.128.8
+uvicorn==0.39.0

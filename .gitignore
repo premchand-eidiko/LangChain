@@ -1,0 +1,10 @@
+# Root learning environment
+.venv/
+.env
+
+# Python generated files
+__pycache__/
+*.py[cod]
+
+# Generated outputs
+output.txt
