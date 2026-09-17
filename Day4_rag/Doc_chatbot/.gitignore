@@ -1,0 +1,14 @@
+.venv/
+.env
+__pycache__/
+*.pyc
+vector_store/
+.vscode/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Local documents may contain private company information.
+data/pdf/*
+data/csv/*
+!data/pdf/.gitkeep
+!data/csv/.gitkeep

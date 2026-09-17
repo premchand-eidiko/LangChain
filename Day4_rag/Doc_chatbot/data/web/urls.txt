@@ -1,0 +1,4 @@
+# Add one public URL per line. Lines beginning with # are ignored.
+https://docs.python.org/3/tutorial/
+https://python.langchain.com/docs/concepts/rag/
+https://docs.trychroma.com/docs/overview/introduction
