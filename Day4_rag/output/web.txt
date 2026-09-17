@@ -1,0 +1,9 @@
+Number of documents: 1
+
+--- DOCUMENT ---
+Content:
+Example DomainExample DomainThis domain is for use in documentation examples without needing permission. Avoid use in operations.Learn more
+
+
+Metadata:
+{'source': 'https://www.example.com', 'title': 'Example Domain', 'language': 'en'}

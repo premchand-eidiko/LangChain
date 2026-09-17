@@ -1,0 +1,31 @@
+Number of documents: 3
+
+--- DOCUMENT ---
+Content:
+id: 1
+name: Asha Rao
+email: asha@example.com
+role: Engineer
+
+Metadata:
+{'source': '/home/bandaru/prem/Langchain/Day4_rag/docs/sample.csv', 'row': 0}
+
+--- DOCUMENT ---
+Content:
+id: 2
+name: Ravi Kumar
+email: ravi@example.com
+role: Designer
+
+Metadata:
+{'source': '/home/bandaru/prem/Langchain/Day4_rag/docs/sample.csv', 'row': 1}
+
+--- DOCUMENT ---
+Content:
+id: 3
+name: Meera Das
+email: meera@example.com
+role: Manager
+
+Metadata:
+{'source': '/home/bandaru/prem/Langchain/Day4_rag/docs/sample.csv', 'row': 2}
