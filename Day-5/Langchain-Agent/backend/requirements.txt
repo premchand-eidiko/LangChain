@@ -9,10 +9,11 @@ email-validator
 python-multipart
 pypdf
 python-docx
-langchain
-langchain-openai
-langchain-groq
-langchain-community
-langchain-text-splitters
+python-pptx
+langchain<1.0
+langchain-openai<1.0
+langchain-groq<1.0
+langchain-community<1.0
+langchain-text-splitters<1.0
 pytest
 httpx

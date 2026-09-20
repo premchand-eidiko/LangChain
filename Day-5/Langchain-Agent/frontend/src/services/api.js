@@ -41,16 +41,20 @@ export const listChats = () => request("/chats");
 export const getChat = (id) => request(`/chats/${id}`);
 export const createChat = (title = "New conversation") =>
   request("/chats", { method: "POST", body: JSON.stringify({ title }) });
+export const renameChat = (id, title) =>
+  request(`/chats/${id}`, { method: "PATCH", body: JSON.stringify({ title }) });
 export const deleteChat = (id) => request(`/chats/${id}`, { method: "DELETE" });
 export const listDocuments = () => request("/documents");
+export const getCurrentUser = () => request("/auth/me");
 
-export async function uploadDocument(file) {
+export async function uploadDocument(file, chatId) {
   const body = new FormData();
   body.append("upload", file);
+  if (chatId) body.append("chat_id", chatId);
   return request("/documents/upload", { method: "POST", body });
 }
 
-export async function streamMessage(chatId, content, onToken, onError) {
+export async function streamMessage(chatId, content, onToken, onError, signal) {
   const token = localStorage.getItem("agent_token");
   const response = await fetch(`${API_URL}/chats/${chatId}/message`, {
     method: "POST",
@@ -58,6 +62,7 @@ export async function streamMessage(chatId, content, onToken, onError) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
+    signal,
     body: JSON.stringify({ content }),
   });
   if (!response.ok) {

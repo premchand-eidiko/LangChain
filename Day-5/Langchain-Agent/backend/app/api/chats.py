@@ -12,6 +12,7 @@ from app.database.session import get_db
 from app.models import Chat, User
 from app.schemas.chat import (
     ChatCreateRequest,
+    ChatUpdateRequest,
     ChatResponse,
     MessageCreateRequest,
     MessageResponse,
@@ -22,6 +23,7 @@ from app.services.chat_service import (
     delete_user_chat,
     get_user_chat,
     list_user_chats,
+    rename_user_chat,
 )
 
 
@@ -65,6 +67,19 @@ def remove_chat(
 ) -> None:
     if not delete_user_chat(db, current_user.id, chat_id):
         raise HTTPException(status_code=404, detail="Chat not found")
+
+
+@router.patch("/{chat_id}", response_model=ChatResponse)
+def update_chat(
+    chat_id: UUID,
+    request: ChatUpdateRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> Chat:
+    chat = rename_user_chat(db, current_user.id, chat_id, request.title.strip())
+    if chat is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    return chat
 
 
 @router.post("/{chat_id}/messages", response_model=MessageResponse, status_code=201)

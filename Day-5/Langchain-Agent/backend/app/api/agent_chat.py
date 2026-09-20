@@ -16,6 +16,8 @@ from app.database.session import get_db
 from app.models import User
 from app.schemas.chat import AgentMessageRequest
 from app.services.chat_service import add_message, get_user_chat
+from app.services.document_service import list_chat_documents
+from app.tools.document_tool import build_document_search_tool
 
 
 router = APIRouter(prefix="/chats", tags=["agent"])
@@ -35,6 +37,15 @@ def _content_text(content) -> str:
     return ""
 
 
+def _is_document_question(text: str) -> bool:
+    keywords = (
+        "document", "doc", "paper", "author", "written by", "content",
+        "chapter", "page", "pages", "slide", "slides", "section",
+    )
+    normalized = text.lower()
+    return any(keyword in normalized for keyword in keywords)
+
+
 @router.post("/{chat_id}/message")
 async def send_agent_message(
     chat_id: UUID,
@@ -46,13 +57,28 @@ async def send_agent_message(
     if chat is None:
         raise HTTPException(status_code=404, detail="Chat not found")
 
-    history = build_chat_history(chat.messages)
+    history = build_chat_history(chat.messages[-12:])
+    chat_documents = list_chat_documents(db, current_user.id, chat_id)
+    document_context = ""
+    if chat_documents:
+        filenames = ", ".join(document.filename for document in chat_documents)
+        document_context = (
+            "\n\nThe documents attached to this chat are: "
+            + filenames
+            + ". Use document_search for questions about them."
+        )
+    is_first_prompt = not any(message.role == "user" for message in chat.messages)
     user_message = add_message(db, current_user.id, chat_id, "user", request.content)
     if user_message is None:
         raise HTTPException(status_code=404, detail="Chat not found")
 
+    if is_first_prompt:
+        title = " ".join(request.content.split())
+        chat.title = title[:57] + "..." if len(title) > 60 else title
+        db.commit()
+
     try:
-        executor = build_agent_executor(db, current_user.id)
+        executor = build_agent_executor(db, current_user.id, chat_id=chat_id)
     except Exception as error:
         raise HTTPException(
             status_code=503,
@@ -63,7 +89,7 @@ async def send_agent_message(
         answer_parts = []
         try:
             async for event in executor.astream_events(
-                {"input": request.content, "chat_history": history},
+                {"input": request.content + document_context, "chat_history": history},
                 version="v1",
             ):
                 if event.get("event") != "on_chat_model_stream":
@@ -76,7 +102,7 @@ async def send_agent_message(
             answer = "".join(answer_parts).strip()
             if not answer:
                 result = await executor.ainvoke(
-                    {"input": request.content, "chat_history": history}
+                    {"input": request.content + document_context, "chat_history": history}
                 )
                 answer = str(result.get("output", "")).strip()
                 if answer:
@@ -88,13 +114,29 @@ async def send_agent_message(
             error_text = str(error).lower()
             if "invalid api key" in error_text or "error code: 401" in error_text:
                 message = "Groq API key is invalid. Update GROQ_API_KEY in .env and restart the backend."
+                yield _event({"type": "error", "message": message})
             else:
-                message = "The assistant could not complete this response"
-            yield _event(
-                {
-                    "type": "error",
-                    "message": message,
-                }
-            )
+                fallback = ""
+                if chat_documents and _is_document_question(request.content):
+                    try:
+                        tool = build_document_search_tool(
+                            db, current_user.id, chat_id=chat_id
+                        )
+                        document_id = str(chat_documents[0].id) if len(chat_documents) == 1 else None
+                        fallback = tool.invoke({
+                            "query": request.content,
+                            "document_id": document_id,
+                        })
+                    except Exception:
+                        fallback = ""
+                if fallback:
+                    add_message(db, current_user.id, chat_id, "assistant", fallback)
+                    yield _event({"type": "token", "content": fallback})
+                    yield _event({"type": "done"})
+                else:
+                    yield _event({
+                        "type": "error",
+                        "message": "The assistant could not complete this response",
+                    })
 
     return StreamingResponse(generate(), media_type="application/x-ndjson")

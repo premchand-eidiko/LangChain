@@ -7,7 +7,7 @@ from app.models import Chat, Document, Message, User
 def test_core_tables_are_registered():
     table_names = set(Base.metadata.tables)
 
-    assert table_names == {"users", "chats", "messages", "documents"}
+    assert table_names == {"users", "chats", "messages", "documents", "chat_documents"}
 
 
 def test_foreign_keys_enforce_ownership_relationships():

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 import uuid
+from typing import List
 
 from sqlalchemy import DateTime, ForeignKey, String, Uuid, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -22,3 +23,6 @@ class Document(Base):
     )
 
     user: Mapped["User"] = relationship(back_populates="documents")
+    chat_documents: Mapped[List["ChatDocument"]] = relationship(
+        back_populates="document", cascade="all, delete-orphan"
+    )

@@ -11,6 +11,10 @@ class ChatCreateRequest(BaseModel):
     title: str = Field(default="New conversation", min_length=1, max_length=200)
 
 
+class ChatUpdateRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+
+
 class MessageCreateRequest(BaseModel):
     role: str = Field(pattern="^(user|assistant|system)$")
     content: str = Field(min_length=1, max_length=100000)

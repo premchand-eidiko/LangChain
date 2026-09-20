@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     llm_api_key: str = ""
     groq_api_key: str = ""
     llm_provider: str = "groq"
-    llm_model: str = "openai/gpt-oss-20b"
+    llm_model: str = "llama-3.1-8b-instant"
     jwt_secret: str = "development-only-change-this-secret"
     jwt_algorithm: str = "HS256"
 

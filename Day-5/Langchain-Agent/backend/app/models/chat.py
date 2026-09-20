@@ -27,3 +27,6 @@ class Chat(Base):
     messages: Mapped[List["Message"]] = relationship(
         back_populates="chat", cascade="all, delete-orphan"
     )
+    chat_documents: Mapped[List["ChatDocument"]] = relationship(
+        back_populates="chat", cascade="all, delete-orphan"
+    )

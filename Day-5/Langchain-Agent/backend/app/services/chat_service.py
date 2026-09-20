@@ -44,6 +44,16 @@ def delete_user_chat(db: Session, user_id: UUID, chat_id: UUID) -> bool:
     return True
 
 
+def rename_user_chat(db: Session, user_id: UUID, chat_id: UUID, title: str) -> Optional[Chat]:
+    chat = get_user_chat(db, user_id, chat_id)
+    if chat is None:
+        return None
+    chat.title = title
+    db.commit()
+    db.refresh(chat)
+    return chat
+
+
 def add_message(
     db: Session,
     user_id: UUID,

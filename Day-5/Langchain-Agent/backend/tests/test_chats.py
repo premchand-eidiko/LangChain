@@ -70,6 +70,14 @@ def test_chat_lifecycle_and_message_persistence(client):
     assert list_response.status_code == 200
     assert [item["id"] for item in list_response.json()] == [chat_id]
 
+    rename_response = client.patch(
+        "/chats/{}".format(chat_id),
+        headers=headers,
+        json={"title": "RAG Notes"},
+    )
+    assert rename_response.status_code == 200
+    assert rename_response.json()["title"] == "RAG Notes"
+
     delete_response = client.delete("/chats/{}".format(chat_id), headers=headers)
     assert delete_response.status_code == 204
     assert client.get("/chats/{}".format(chat_id), headers=headers).status_code == 404
@@ -89,4 +97,9 @@ def test_user_cannot_access_another_users_chat(client):
         json={"role": "user", "content": "Should be rejected"},
     ).status_code == 404
     assert client.delete("/chats/{}".format(chat_id), headers=other_headers).status_code == 404
+    assert client.patch(
+        "/chats/{}".format(chat_id),
+        headers=other_headers,
+        json={"title": "Should be rejected"},
+    ).status_code == 404
     assert client.get("/chats/{}".format(chat_id), headers=owner_headers).status_code == 200

@@ -22,9 +22,10 @@ def build_agent_tools(
     user_id: UUID,
     search: Optional[Callable[[str, int], List[SearchResult]]] = None,
     store: UserVectorStore = vector_store,
+    chat_id: Optional[UUID] = None,
 ) -> List[BaseTool]:
     return [
-        build_document_search_tool(db, user_id, store),
+        build_document_search_tool(db, user_id, store, chat_id),
         build_web_search_tool(search),
     ]
 
@@ -35,6 +36,7 @@ def build_agent_executor(
     llm=None,
     search: Optional[Callable[[str, int], List[SearchResult]]] = None,
     store: UserVectorStore = vector_store,
+    chat_id: Optional[UUID] = None,
 ) -> AgentExecutor:
     settings = get_settings()
     if llm is not None:
@@ -51,7 +53,7 @@ def build_agent_executor(
             api_key=settings.llm_api_key,
             temperature=0,
         )
-    tools = build_agent_tools(db, user_id, search, store)
+    tools = build_agent_tools(db, user_id, search, store, chat_id)
     agent = create_tool_calling_agent(model, tools, build_agent_prompt())
     return AgentExecutor(
         agent=agent,

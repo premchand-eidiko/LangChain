@@ -1,6 +1,6 @@
 from app.database.base import Base
 from app.database.connection import engine
-from app.models import Chat, Document, Message, User
+from app.models import Chat, ChatDocument, Document, Message, User
 
 
 def create_tables() -> None:

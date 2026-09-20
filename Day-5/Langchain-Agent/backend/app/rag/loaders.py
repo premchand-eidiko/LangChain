@@ -11,11 +11,36 @@ from langchain_community.document_loaders import (
     TextLoader,
 )
 from langchain_core.documents import Document as LangChainDocument
+from pptx import Presentation
+
+
+class PowerPointLoader:
+    def __init__(self, path: str):
+        self.path = path
+
+    def load(self) -> List[LangChainDocument]:
+        presentation = Presentation(self.path)
+        slides = []
+        for slide_number, slide in enumerate(presentation.slides, start=1):
+            text = "\n".join(
+                shape.text.strip()
+                for shape in slide.shapes
+                if hasattr(shape, "text") and shape.text.strip()
+            )
+            if text:
+                slides.append(
+                    LangChainDocument(
+                        page_content=text,
+                        metadata={"slide": slide_number},
+                    )
+                )
+        return slides
 
 
 LOADERS = {
     ".pdf": PyPDFLoader,
     ".docx": Docx2txtLoader,
+    ".pptx": PowerPointLoader,
     ".txt": TextLoader,
     ".csv": CSVLoader,
 }
