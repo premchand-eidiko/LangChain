@@ -126,7 +126,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .secondary-button, .theme-switch { border: 1px solid var(--border-strong); border-radius: 7px; background: transparent; color: var(--text); padding: 9px 12px; font-size: 12px; font-weight: 600; }
 .secondary-button:hover, .theme-switch:hover { background: var(--hover); }
 .modal-actions .primary-button { width: auto; padding: 9px 16px; }
-.settings-card { width: min(430px, 100%); }
+.settings-card { width: min(520px, 100%); max-height: min(720px, calc(100vh - 40px)); overflow-y: auto; }
 .settings-header { display: flex; justify-content: space-between; align-items: start; }
 .settings-header h2 { margin: 6px 0 0; }
 .modal-close { border: 0; background: transparent; color: var(--muted); font-size: 24px; }
@@ -137,6 +137,22 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .profile-row strong, .settings-row strong { font-size: 13px; }
 .profile-row span, .settings-row span { margin-top: 3px; color: var(--muted); font-size: 11px; }
 .settings-row { justify-content: space-between; }
+.usage-section { margin-top: 4px; border-top: 1px solid var(--border); padding-top: 16px; }
+.usage-section h3 { margin: 5px 0 0; font: 600 16px "Space Grotesk", sans-serif; }
+.refresh-usage { border: 1px solid var(--border-strong); border-radius: 7px; background: transparent; color: var(--muted); padding: 5px 8px; }
+.refresh-usage:hover { background: var(--hover); color: var(--text); }
+.usage-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+.usage-cards > div { display: grid; gap: 3px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); padding: 10px; }
+.usage-cards strong { font: 600 22px "Space Grotesk", sans-serif; }
+.usage-cards span, .usage-label { color: var(--muted); font-size: 10px; }
+.usage-label { margin: 17px 0 7px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+.usage-table { display: grid; gap: 5px; }
+.usage-line { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--border); padding: 7px 0; font-size: 12px; }
+.usage-line span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.usage-line small { flex: 0 0 auto; color: var(--muted); }
+.usage-empty { color: var(--muted); font-size: 12px; }
+.load-usage { width: 100%; margin-top: 14px; border: 1px solid var(--border-strong); border-radius: 7px; background: transparent; color: var(--text); padding: 9px; font-size: 12px; }
+.load-usage:hover { background: var(--hover); }
 
 @media (max-width: 760px) {
 	.auth-shell { padding: 18px; }

@@ -18,9 +18,14 @@ class Settings(BaseSettings):
     llm_api_key: str = ""
     groq_api_key: str = ""
     llm_provider: str = "groq"
-    llm_model: str = "llama-3.1-8b-instant"
+    llm_model: str = "openai/gpt-oss-20b"
     jwt_secret: str = "development-only-change-this-secret"
     jwt_algorithm: str = "HS256"
+    langfuse_public_key: str = ""
+    langfuse_secret_key: str = ""
+    langfuse_base_url: str = "https://cloud.langfuse.com"
+    langfuse_environment: str = "development"
+    langfuse_sample_rate: float = 1.0
 
     model_config = SettingsConfigDict(
         env_file=str(ENV_FILE),

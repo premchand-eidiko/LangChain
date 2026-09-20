@@ -9,6 +9,10 @@ async function request(path, options = {}) {
   }
 
   const response = await fetch(`${API_URL}${path}`, { ...options, headers });
+  if (response.status === 401) {
+    localStorage.removeItem("agent_token");
+    window.dispatchEvent(new Event("agent-auth-expired"));
+  }
   if (!response.ok) {
     let message = "Something went wrong.";
     try {
@@ -46,6 +50,7 @@ export const renameChat = (id, title) =>
 export const deleteChat = (id) => request(`/chats/${id}`, { method: "DELETE" });
 export const listDocuments = () => request("/documents");
 export const getCurrentUser = () => request("/auth/me");
+export const getUsageSummary = () => request("/analytics/usage");
 
 export async function uploadDocument(file, chatId) {
   const body = new FormData();
@@ -66,6 +71,10 @@ export async function streamMessage(chatId, content, onToken, onError, signal) {
     body: JSON.stringify({ content }),
   });
   if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem("agent_token");
+      window.dispatchEvent(new Event("agent-auth-expired"));
+    }
     let message = "The assistant could not respond.";
     try {
       message = (await response.json()).detail || message;

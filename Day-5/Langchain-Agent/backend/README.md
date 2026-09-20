@@ -1,34 +1,38 @@
 # Backend
 
-The FastAPI backend will own authentication, chat persistence, document processing, retrieval, tools, and agent orchestration.
+FastAPI service for authentication, chat persistence, document uploads, RAG, web search, LangChain agents, streaming responses, analytics, and Langfuse tracing.
 
-## Current Backend
+## Install
 
-The backend includes authentication, owner-scoped chats and documents, upload-time indexing, RAG retrieval, web search, conversation context, and the streaming agent endpoint. It defaults to SQLite for local development and initializes tables at startup. Set `DATABASE_URL` to PostgreSQL for deployment.
+From the repository root:
 
-Important endpoints:
-
-```text
-POST /auth/register
-POST /auth/login
-GET  /auth/me
-GET  /chats
-POST /chats
-POST /chats/{chat_id}/message
-POST /documents/upload
-GET  /documents
+```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
+Copy-Item .env.example .env
 ```
 
-Database tables can be initialized after PostgreSQL is running:
+Add `GROQ_API_KEY` to `.env` at the repository root.
 
-```bash
-PYTHONPATH=backend python -m app.database.init_db
+## Run
+
+From the `backend` folder:
+
+```powershell
+..\.venv\Scripts\Activate.ps1
+uvicorn app.main:app --reload
 ```
 
-Authentication, chat APIs, and AI features are intentionally added in later phases.
+The API listens on http://127.0.0.1:8000. Health check: http://127.0.0.1:8000/health
 
-Run from the repository root after installing `backend/requirements.txt`:
+## Database
 
-```bash
-uvicorn backend.app.main:app --reload
+The default database is local SQLite at `data/production_ai_agent.db`. Set `DATABASE_URL` in `.env` to use PostgreSQL in deployment.
+
+## Tests
+
+From the repository root:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest backend\tests -q
 ```

@@ -10,14 +10,19 @@ from app.api.auth import router as auth_router
 from app.api.chats import router as chats_router
 from app.api.documents import router as documents_router
 from app.api.agent_chat import router as agent_chat_router
+from app.api.analytics import router as analytics_router
 from app.core.config import get_settings
+from app.core.observability import flush_langfuse
 from app.database.init_db import create_tables
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     create_tables()
-    yield
+    try:
+        yield
+    finally:
+        flush_langfuse()
 
 app = FastAPI(
     title="Production Multi-Tool Conversational AI Agent",
@@ -37,6 +42,7 @@ app.include_router(auth_router)
 app.include_router(chats_router)
 app.include_router(documents_router)
 app.include_router(agent_chat_router)
+app.include_router(analytics_router)
 
 
 @app.get("/health")

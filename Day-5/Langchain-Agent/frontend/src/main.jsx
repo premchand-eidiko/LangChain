@@ -5,6 +5,7 @@ import {
   createChat,
   deleteChat,
   getCurrentUser,
+  getUsageSummary,
   getChat,
   listChats,
   logout,
@@ -76,6 +77,7 @@ function Dashboard({ onLogout }) {
   const [renameValue, setRenameValue] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profile, setProfile] = useState(null);
+  const [usage, setUsage] = useState(null);
   const [pinnedChats, setPinnedChats] = useState(() => JSON.parse(localStorage.getItem("agent_pinned_chats") || "[]"));
   const [attachedDocuments, setAttachedDocuments] = useState([]);
   const responseController = useRef(null);
@@ -245,13 +247,18 @@ function Dashboard({ onLogout }) {
         <form className="composer" onSubmit={sendMessage}>{attachedDocuments.length > 0 && <div className="attachment-list">{attachedDocuments.map((document) => <div className="attachment-card" key={document.id}><div className="attachment-icon">{document.file_type === "pdf" ? "◉" : "▤"}</div><div className="attachment-copy"><strong>{document.filename}</strong><span>{document.file_type.toUpperCase()} document</span></div><button type="button" onClick={() => setAttachedDocuments((items) => items.filter((item) => item.id !== document.id))} aria-label={`Remove ${document.filename}`}>×</button></div>)}</div>}<div className="composer-tools"><button type="button" className="attach-button" onClick={() => fileInput.current.click()} aria-label="Upload document">＋</button><textarea value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={handleComposerKeyDown} placeholder={activeChat ? "Message Private AI..." : "Create a conversation to begin"} disabled={!activeChat || busy} rows="1" />{busy ? <button type="button" className="stop-button" onClick={stopResponse} aria-label="Stop response">■</button> : <button className="send-button" disabled={!activeChat || !input.trim()} aria-label="Send message">↑</button>}</div><p className="composer-note">{busy ? "Private AI is responding · Click stop to send another prompt" : "Press Enter to send · Shift + Enter for a new line"}</p></form>
       </section>
       {editingChat && <div className="modal-backdrop"><form className="modal-card" onSubmit={saveRename}><h2>Rename conversation</h2><input value={renameValue} onChange={(event) => setRenameValue(event.target.value)} autoFocus maxLength="200" /><div className="modal-actions"><button type="button" className="secondary-button" onClick={() => setEditingChat(null)}>Cancel</button><button className="primary-button">Save</button></div></form></div>}
-      {settingsOpen && <div className="modal-backdrop" onClick={() => setSettingsOpen(false)}><section className="modal-card settings-card" onClick={(event) => event.stopPropagation()}><div className="settings-header"><div><p className="eyebrow">Workspace</p><h2>Settings</h2></div><button className="modal-close" onClick={() => setSettingsOpen(false)} aria-label="Close settings">×</button></div><div className="profile-row"><div className="profile-avatar">{profile?.email?.[0]?.toUpperCase() || "U"}</div><div><strong>{profile?.email || "Your profile"}</strong><span>Signed in account</span></div></div><div className="settings-row"><div><strong>Appearance</strong><span>{theme === "dark" ? "Dark theme" : "Light theme"}</span></div><button className="theme-switch" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? "☼ Light" : "◐ Dark"}</button></div></section></div>}
+          {settingsOpen && <div className="modal-backdrop" onClick={() => setSettingsOpen(false)}><section className="modal-card settings-card" onClick={(event) => event.stopPropagation()}><div className="settings-header"><div><p className="eyebrow">Workspace</p><h2>Settings & usage</h2></div><button className="modal-close" onClick={() => setSettingsOpen(false)} aria-label="Close settings">×</button></div><div className="profile-row"><div className="profile-avatar">{profile?.email?.[0]?.toUpperCase() || "U"}</div><div><strong>{profile?.email || "Your profile"}</strong><span>Signed in account</span></div></div><div className="settings-row"><div><strong>Appearance</strong><span>{theme === "dark" ? "Dark theme" : "Light theme"}</span></div><button className="theme-switch" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? "☼ Light" : "◐ Dark"}</button></div><div className="usage-section"><div className="settings-header"><div><p className="eyebrow">Workspace analytics</p><h3>Usage overview</h3></div><button className="refresh-usage" onClick={() => getUsageSummary().then(setUsage).catch((requestError) => setError(requestError.message))}>↻</button></div>{usage ? <><div className="usage-cards"><div><strong>{usage.totals.users}</strong><span>Users</span></div><div><strong>{usage.totals.chats}</strong><span>Chats</span></div><div><strong>{usage.totals.documents}</strong><span>Documents</span></div></div><p className="usage-label">Per user</p><div className="usage-table">{usage.users.map((user) => <div className="usage-line" key={user.id}><span>{user.email}</span><small>{user.chats} chats · {user.documents} docs</small></div>)}</div><p className="usage-label">Per chat</p><div className="usage-table">{usage.chats.length ? usage.chats.map((chat) => <div className="usage-line" key={chat.id}><span>{chat.title}</span><small>{chat.documents} docs</small></div>) : <span className="usage-empty">No chats yet.</span>}</div></> : <button className="load-usage" onClick={() => getUsageSummary().then(setUsage).catch((requestError) => setError(requestError.message))}>Load usage analytics</button>}</div></section></div>}
     </main>
   );
 }
 
 function App() {
   const [authenticated, setAuthenticated] = useState(Boolean(localStorage.getItem("agent_token")));
+  useEffect(() => {
+    const handleAuthExpired = () => setAuthenticated(false);
+    window.addEventListener("agent-auth-expired", handleAuthExpired);
+    return () => window.removeEventListener("agent-auth-expired", handleAuthExpired);
+  }, []);
   return authenticated ? <Dashboard onLogout={() => setAuthenticated(false)} /> : <AuthScreen onAuthenticated={() => setAuthenticated(true)} />;
 }
 

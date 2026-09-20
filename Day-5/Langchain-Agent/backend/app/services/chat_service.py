@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import List, Optional
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Chat, Message
+from app.models import Chat, ChatDocument, Document, Message
 
 
 def create_chat(db: Session, user_id: UUID, title: str) -> Chat:
@@ -39,8 +40,29 @@ def delete_user_chat(db: Session, user_id: UUID, chat_id: UUID) -> bool:
     chat = get_user_chat(db, user_id, chat_id)
     if chat is None:
         return False
+
+    document_ids = list(
+        db.scalars(
+            select(ChatDocument.document_id).where(ChatDocument.chat_id == chat_id)
+        ).all()
+    )
     db.delete(chat)
     db.commit()
+
+    if document_ids:
+        orphaned_documents = list(
+            db.scalars(
+                select(Document).where(
+                    Document.user_id == user_id,
+                    Document.id.in_(document_ids),
+                    ~Document.chat_documents.any(),
+                )
+            ).all()
+        )
+        for document in orphaned_documents:
+            Path(document.storage_path).unlink(missing_ok=True)
+            db.delete(document)
+        db.commit()
     return True
 
 

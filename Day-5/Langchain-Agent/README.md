@@ -1,146 +1,127 @@
-# Production Multi-Tool Conversational AI Agent
+# Private AI Workspace
 
-A learning project for building a production-style conversational assistant with FastAPI, React, LangChain, PostgreSQL, document retrieval, web search, calculator tools, authentication, and streaming responses.
+A local-first conversational AI application with FastAPI, React, LangChain, document RAG, web search, authentication, streaming responses, and Langfuse observability.
 
-## Current Status: Usable Local Application
+## Features
 
-The application is now usable locally. It includes the Phase 1-10 foundations, automatic SQLite startup, document indexing on upload, authenticated chat context, streaming agent responses, and a React dashboard. The optional calculator phase was intentionally skipped. PostgreSQL remains available through `DATABASE_URL` for a production deployment.
+- JWT authentication with owner-scoped chats and documents
+- Streaming Groq/LangChain responses with stop/cancel support
+- Chat history with automatic first-prompt titles, rename, pin, and delete
+- Chat-scoped PDF, DOCX, PPTX, TXT, and CSV uploads and retrieval
+- Document cards attached to sent prompts and prompt editing
+- Optional Tavily web search
+- Usage analytics for users, chats, and documents in Settings
+- Responsive light/dark interface with independently scrolling chat history
+- Optional Langfuse tracing for model calls, tools, latency, tokens, and errors
 
-We will verify each phase before adding the next one.
+## Requirements
 
-## Planned Architecture
+- Python 3.10+ (tested with 3.13)
+- Node.js 20+
+- npm
 
-```mermaid
-flowchart TD
-    User --> React[React UI]
-    React --> API[FastAPI]
-    API --> Agent[LangChain Agent]
-    Agent --> LLM[LLM]
-    Agent --> Docs[Document Search]
-    Agent --> Web[Web Search]
-    Agent --> Calc[Calculator]
-    Docs --> Vector[Vector Store]
-    API --> DB[(PostgreSQL)]
+## First-Time Setup
+
+From the repository root:
+
+```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
+Copy-Item .env.example .env
 ```
 
-## Planned Project Areas
+Edit `.env` and set `GROQ_API_KEY`. `SEARCH_API_KEY` is optional (Tavily web search).
 
-- `backend/app`: FastAPI application and future domain modules.
-- `frontend/src`: React application.
-- `data/uploads`: Local development storage for uploaded documents.
-- `docker-compose.yml`: Local PostgreSQL service for later phases.
+Install frontend dependencies once:
 
-## Database Design
-
-- `users` owns accounts and uploaded documents.
-- `chats` belongs to one user.
-- `messages` belongs to one chat and is deleted with that chat.
-- `documents` belongs to one user, which provides the ownership boundary needed by RAG retrieval.
-
-The models use UUID identifiers, foreign keys, timestamps, and SQLAlchemy relationships. PostgreSQL is not installed or running yet, so live connection verification will happen when we choose the database setup.
-
-## Chat API
-
-Authenticated chat endpoints currently support:
-
-- `POST /chats`
-- `GET /chats`
-- `GET /chats/{chat_id}`
-- `DELETE /chats/{chat_id}`
-- `POST /chats/{chat_id}/messages`
-
-Chat ownership is always taken from the authenticated JWT. A client cannot provide another user's ID to access their conversations.
-
-## Document API
-
-Authenticated document endpoints currently support:
-
-- `POST /documents/upload`
-- `GET /documents`
-- `DELETE /documents/{document_id}`
-
-Uploads currently accept PDF, DOCX, TXT, and CSV files up to 10 MB. Files are stored with generated UUID filenames, while the original filename is retained as metadata. Retrieval and deletion are scoped to the authenticated user.
-
-## RAG Pipeline
-
-```mermaid
-flowchart TD
-    File[Stored document] --> Loader[Format-specific loader]
-    Loader --> Splitter[Recursive text splitter]
-    Splitter --> Metadata[User and document metadata]
-    Metadata --> Embeddings[Embedding model]
-    Embeddings --> Store[Per-user vector store]
-    Query[User question] --> Retriever[Metadata-filtered retriever]
-    Store --> Retriever
-    Retriever --> Chunks[Relevant chunks]
+```powershell
+Set-Location frontend
+npm ci
 ```
-
-Phase 6 uses deterministic local embeddings and an in-memory vector store for development and tests. The embedding class and vector-store wrapper are replaceable; a persistent production vector store and API-backed embedding model will be selected before deployment. Upload processing is connected to this pipeline in a later phase after the independent RAG tests are verified.
-
-The document search tool receives a structured query and document ID. Its authenticated user identity is bound when the tool is created, and ownership is checked against the database before vector retrieval.
-
-The web search tool receives a structured query and calls Tavily only when `SEARCH_API_KEY` is configured. The provider is isolated behind `TavilySearchProvider`, so another search API can replace it without changing the agent tool contract.
-
-The agent factory binds the authenticated user's document tool and the web search tool to a configured LLM. It does not expose intermediate reasoning; only the final answer is returned by the executor.
 
 ## Run Locally
 
-Backend:
+Use two terminals.
 
-```bash
-cd /home/bandaru/prem/Langchain/Day-5/Langchain-Agent
-source .venv/bin/activate
-cp .env.example .env
-PYTHONPATH=backend uvicorn app.main:app --reload
+**Terminal 1 — backend**
+
+```powershell
+Set-Location backend
+..\.venv\Scripts\Activate.ps1
+uvicorn app.main:app --reload
 ```
 
-Frontend, in another terminal:
+Backend runs at http://127.0.0.1:8000
 
-```bash
-source ~/.nvm/nvm.sh
-nvm use --lts
-cd /home/bandaru/prem/Langchain/Day-5/Langchain-Agent/frontend
-npm install
+**Terminal 2 — frontend**
+
+```powershell
+Set-Location frontend
 npm run dev
 ```
 
-Open `http://localhost:5173`. Registration, login, conversations, uploads, and document indexing work with the local SQLite default. Set `LLM_API_KEY` in `.env` for assistant answers and `SEARCH_API_KEY` for web search.
+Open http://localhost:5173
 
-## Tests
+SQLite is used locally at `data/production_ai_agent.db`. Tables are created automatically at startup.
 
-```bash
-cd /home/bandaru/prem/Langchain/Day-5/Langchain-Agent
-PYTHONPATH=backend .venv/bin/python -m pytest backend/tests -q
+### Troubleshooting
+
+| Issue | Fix |
+|---|---|
+| `uvicorn` not found | Run `..\.venv\Scripts\Activate.ps1` in the `backend` folder first |
+| Script execution disabled | Run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once |
+| `vite` not found | Run `npm ci` once in the `frontend` folder |
+| AI does not respond | Add `GROQ_API_KEY` to `.env` and restart the backend |
+
+## Environment Variables
+
+See `.env.example` for all supported settings. Common values:
+
+```env
+GROQ_API_KEY=gsk_...
+SEARCH_API_KEY=tvly-...          # optional
+JWT_SECRET=change-me-in-prod
+DATABASE_URL=                    # leave empty for local SQLite
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+LLM_PROVIDER=groq
+LLM_MODEL=openai/gpt-oss-20b
 ```
 
-## Environment Setup
+## Langfuse
 
-1. Copy `.env.example` to `.env`.
-2. Add credentials only to `.env`; never commit them.
-3. Install backend dependencies from `backend/requirements.txt`.
-4. Install frontend dependencies with `npm install` inside `frontend`.
+Tracing uses `langfuse==4.0.6` and the official LangChain callback integration:
 
-## Phase 1 Checks
-
-Backend health check:
-
-```bash
-uvicorn backend.app.main:app --reload
-curl http://127.0.0.1:8000/health
+```env
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_BASE_URL=https://cloud.langfuse.com
+LANGFUSE_ENVIRONMENT=development
+LANGFUSE_SAMPLE_RATE=1.0
 ```
 
-Expected response:
+Each chat turn becomes a trace grouped by chat session. Tracing is fail-open and disabled when keys are absent. Traces flush during FastAPI shutdown.
 
-```json
-{"status":"ok"}
+## API Highlights
+
+```text
+POST  /auth/register       POST  /auth/login
+GET   /auth/me             GET   /chats
+POST  /chats               PATCH /chats/{chat_id}
+DELETE /chats/{chat_id}    POST  /chats/{chat_id}/message
+POST  /documents/upload    GET   /documents
+GET   /analytics/usage     GET   /health
 ```
 
-Frontend:
+Deleting a chat removes its messages and orphaned document files. A document shared with another chat remains available there.
 
-```bash
-cd frontend
-npm install
-npm run dev
+## Validation
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest backend\tests -q
+Set-Location frontend
+npm run build
 ```
 
-The remaining phases will add database persistence, authentication, chat APIs, RAG, tools, agent orchestration, streaming, tests, and production cleanup incrementally.
+## Repository Hygiene
+
+Do not commit `.env`, API keys, `keys.txt`, `.venv`, `node_modules`, generated data, uploads, or build/cache folders. These are ignored by `.gitignore`.
